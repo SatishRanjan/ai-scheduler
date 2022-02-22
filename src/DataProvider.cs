@@ -3,17 +3,24 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using ai_scheduler.src.models;
+using System.Linq;
 
 namespace ai_scheduler.src
 {
     public class DataProvider
     {
-        public VirtualWorld GetcountryAndResourcesFromCsvFiles()
+        public VirtualWorld GetVirtualWorld(string initialStateOfVirtualWorldFilePath, List<VirtualResource> virtualResources)
         {
             VirtualWorld virtualWorld = new VirtualWorld();
             virtualWorld.VirtualCountries = new List<VirtualCountry>();
-            string countryAndResourceFilePath = @"C:\Users\satishra\Dropbox\MyDocsLib\MS-Vanderbilt\0-Courses\cs-5260-Artificial-Intelligence\ai-scheduler\initial_data\country_resource_seeding_data.csv";
-            string[] countryResourceFileLines = File.ReadAllLines(countryAndResourceFilePath);
+
+            // If the initial state file doesn't exist then return the empty state of the virtual world
+            if (!File.Exists(initialStateOfVirtualWorldFilePath))
+            {
+                return virtualWorld;
+            }
+
+            string[] countryResourceFileLines = File.ReadAllLines(initialStateOfVirtualWorldFilePath);
             if (countryResourceFileLines.Length > 1)
             {
                 string[] resources = countryResourceFileLines[0].Split(',');
@@ -30,10 +37,25 @@ namespace ai_scheduler.src
                     for (int j = 1; j < countryAndResourceQuantities.Length; ++j)
                     {
                         VirtualResourceAndQuantity virtualResourceAndQuantity = new VirtualResourceAndQuantity();
-                        virtualResourceAndQuantity.VirtualResource = new VirtualResource
+
+                        // Retrieve the VirtualResource from the resource list
+                        VirtualResource vr = null;
+                        if (!string.IsNullOrEmpty(resources[j].Trim()))
                         {
-                            Name = resources[j].Trim()
-                        };
+                            vr = virtualResources.Where(r => r.Name == resources[j].Trim()).FirstOrDefault();
+                        }
+
+                        if (vr != null)
+                        {
+                            virtualResourceAndQuantity.VirtualResource = vr.Clone();
+                        }
+                        else
+                        {
+                            virtualResourceAndQuantity.VirtualResource = new VirtualResource
+                            {
+                                Name = resources[j].Trim()
+                            };
+                        }
 
                         virtualResourceAndQuantity.Quantity = int.Parse(countryAndResourceQuantities[j].Trim());
                         virtualCountry.ResourcesAndQunatities.Add(virtualResourceAndQuantity);
@@ -46,18 +68,33 @@ namespace ai_scheduler.src
             return virtualWorld;
         }
 
-        public List<VirtualResource> GetResourcesInfo()
+        public List<VirtualResource> GetResources(string resourceInfoFilePath)
         {
             List<VirtualResource> resourceInfoList = new List<VirtualResource>();
-            string resourceInfoFilePath = @"C:\Users\satishra\Dropbox\MyDocsLib\MS-Vanderbilt\0-Courses\cs-5260-Artificial-Intelligence\ai-scheduler\initial_data\resource_seeding_data.csv";
+
+            // If the resource file doesn't exist, return the empty list of VirtualResource
+            if (!File.Exists(resourceInfoFilePath))
+            {
+                return resourceInfoList;
+            }
+
             string[] resourceInfoLines = File.ReadAllLines(resourceInfoFilePath);
             if (resourceInfoLines.Length > 1)
             {
                 VirtualResource vr = null;
-                for (int i = 1; i < resourceInfoLines.Length - 1; ++i)
+                for (int i = 1; i < resourceInfoLines.Length; ++i)
                 {
                     string[] eachLines = resourceInfoLines[i].Split(',');
-                    vr = new VirtualResource(eachLines[0].Trim(), double.Parse(eachLines[1].Trim()));
+                    vr = new VirtualResource
+                    {
+                        Name = eachLines[0].Trim(),
+                        Weight = double.Parse(eachLines[1].Trim()),
+                        Kind = (ResourceKind)Enum.Parse(typeof(ResourceKind), eachLines[2].Trim()),
+                        IsRenewable = eachLines[3].Trim() == "yes" ? true : false,
+                        IsTransferrable = eachLines[4].Trim() == "yes" ? true : false,
+                        IsWaste = eachLines[5].Trim() == "yes" ? true : false,
+                    };
+
                     resourceInfoList.Add(vr);
                 }
             }

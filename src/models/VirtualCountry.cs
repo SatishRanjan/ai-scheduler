@@ -31,5 +31,14 @@ namespace ai_scheduler.src.models
             get;
             set;
         }
+
+        /// <summary>
+        /// A flag indicating if a country is "self" or not (self = true else false)
+        /// </summary>
+        public bool IsSelf
+        {
+            get;
+            set;
+        }
     }
 }

@@ -14,7 +14,6 @@ namespace ai_scheduler.src.actions
             OUTPUTS = new Dictionary<string, int>();
         }
 
-        public string CountryName { get; set; }
         public string ActionName { get; private set; }
         public Dictionary<string, int> INPUTS { get; set; }
         public Dictionary<string, int> OUTPUTS { get; set; }

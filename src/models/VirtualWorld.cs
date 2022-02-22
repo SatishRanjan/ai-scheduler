@@ -45,6 +45,7 @@ namespace ai_scheduler.src.models
                         VirtualResource = new VirtualResource
                         {
                             Name = vRQ.VirtualResource.Name,
+                            Kind = vRQ.VirtualResource.Kind,
                             Weight = vRQ.VirtualResource.Weight,
                             IsWaste = vRQ.VirtualResource.IsWaste,
                             IsRenewable = vRQ.VirtualResource.IsRenewable,
@@ -60,6 +61,16 @@ namespace ai_scheduler.src.models
             }
 
             return clonedVirtualWorld;
+        }
+
+        public void ApplyTransformTemplate()
+        {
+
+        }
+
+        public void ApplyTransferTemplate()
+        {
+
         }
     }
 }

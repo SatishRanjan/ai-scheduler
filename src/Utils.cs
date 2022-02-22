@@ -9,4 +9,11 @@ namespace ai_scheduler.src
         TRANSFORM,
         TRANSFER
     }
+
+    public enum ResourceKind
+    {
+        Raw,
+        Created,
+        Waste
+    }
 }
