@@ -10,7 +10,7 @@ namespace ai_scheduler.src.models
         public VirtualWorld()
         {
             VirtualCountries = new List<VirtualCountry>();
-            ScheduleList = new List<TemplateBase>();
+            ApplliedOperationsList = new List<TemplateBase>();
             ScheduleAndItsParticipatingConuntries = new Dictionary<TemplateBase, List<string>>();
         }
 
@@ -22,7 +22,7 @@ namespace ai_scheduler.src.models
         /// <summary>
         /// The list of applied templates, aka. schedules
         /// </summary>
-        public List<TemplateBase> ScheduleList { get; set; }
+        public List<TemplateBase> ApplliedOperationsList { get; set; }
 
         /// <summary>
         /// The schedule to participating country mapping
@@ -48,9 +48,9 @@ namespace ai_scheduler.src.models
             // Create a new VirtualWorld object
             VirtualWorld clonedVirtualWorld = new VirtualWorld();
 
-            foreach (TemplateBase schedule in this.ScheduleList)
+            foreach (TemplateBase schedule in this.ApplliedOperationsList)
             {
-                ScheduleList.Add(schedule);
+                ApplliedOperationsList.Add(schedule);
             }
 
             // For each country create the new VirtualCountry and new VirtualResourceAndQuantity

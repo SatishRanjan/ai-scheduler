@@ -83,7 +83,7 @@ namespace ai_scheduler.src
             {
                 VirtualWorld worldState = frontier.Dequeue();
                 // If the schedule list to the world state reaches the search depth bound, add it to the solution priority queue 
-                if (worldState.ScheduleList.Count == depthBound)
+                if (worldState.ApplliedOperationsList.Count == depthBound)
                 {
                     solutions.Enqueue(worldState);
                 }
