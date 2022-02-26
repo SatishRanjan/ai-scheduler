@@ -20,7 +20,9 @@ namespace ai_scheduler.src
                 return virtualWorld;
             }
 
-            string[] countryResourceFileLines = File.ReadAllLines(initialStateOfVirtualWorldFilePath);
+            //string[] countryResourceFileLines = File.ReadAllLines(initialStateOfVirtualWorldFilePath);
+            string[] countryResourceFileLines = GetLinesFromFile(initialStateOfVirtualWorldFilePath);
+
             if (countryResourceFileLines.Length > 1)
             {
                 string[] resources = countryResourceFileLines[0].Split(',');
@@ -78,7 +80,8 @@ namespace ai_scheduler.src
                 return resourceInfoList;
             }
 
-            string[] resourceInfoLines = File.ReadAllLines(resourceInfoFilePath);
+            //string[] resourceInfoLines = File.ReadAllLines(resourceInfoFilePath);
+            string[] resourceInfoLines = GetLinesFromFile(resourceInfoFilePath);
             if (resourceInfoLines.Length > 1)
             {
                 VirtualResource vr = null;
@@ -102,6 +105,30 @@ namespace ai_scheduler.src
             return resourceInfoList;
         }
 
+        /// <summary>
+        /// Reads the lines from the file
+        /// </summary>
+        /// <param name="filePath">The file path to read</param>
+        /// <returns><see cref="string[]"/></returns>
+        private string[] GetLinesFromFile(string filePath)
+        {
+            List<string> lines = new List<string>();
+            using (FileStream readFs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                using (StreamReader sr = new StreamReader(readFs))
+                {
+                    while (sr.Peek() >= 0) // reading the live data if exists
+                    {
+                        string str = sr.ReadLine();
+                        if (str != null)
+                        {
+                            lines.Add(str);
+                        }
+                    }
+                }
+            }
 
+            return lines.ToArray();
+        }
     }
 }

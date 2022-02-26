@@ -1,5 +1,7 @@
-﻿using System;
+﻿using ai_scheduler.src.actions;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace ai_scheduler.src.models
@@ -13,7 +15,14 @@ namespace ai_scheduler.src.models
         public VirtualCountry()
         {
             ResourcesAndQunatities = new List<VirtualResourceAndQuantity>();
+            ScheduleList = new List<TemplateBase>();
         }
+
+        /// <summary>
+        /// The list of applied templates, aka. schedules
+        /// </summary>
+        public List<TemplateBase> ScheduleList { get; set; }
+
         /// <summary>
         /// Returns the name of the country
         /// </summary>
@@ -39,6 +48,63 @@ namespace ai_scheduler.src.models
         {
             get;
             set;
+        }
+
+        public double StateQuality
+        {
+            get;
+            private set;
+        }
+
+        public int SearchDepth
+        {
+            get;
+            set;
+        }
+
+        public double GetStateQuality()
+        {
+            StateQuality = new Random().NextDouble();
+            return StateQuality;
+        }
+
+        public VirtualCountry Clone()
+        {
+            VirtualCountry clonedVc = new VirtualCountry
+            {
+                CountryName = this.CountryName,
+                ResourcesAndQunatities = new List<VirtualResourceAndQuantity>(),
+                ScheduleList = new List<TemplateBase>()
+            };
+
+            foreach (VirtualResourceAndQuantity vRQ in this.ResourcesAndQunatities)
+            {
+                VirtualResourceAndQuantity newVrQ = new VirtualResourceAndQuantity
+                {
+                    VirtualResource = new VirtualResource
+                    {
+                        Name = vRQ.VirtualResource.Name,
+                        Kind = vRQ.VirtualResource.Kind,
+                        Weight = vRQ.VirtualResource.Weight,
+                        IsWaste = vRQ.VirtualResource.IsWaste,
+                        IsRenewable = vRQ.VirtualResource.IsRenewable,
+                        IsTransferrable = vRQ.VirtualResource.IsTransferrable                        
+                    },
+                    Quantity = vRQ.Quantity
+                };
+
+                clonedVc.ResourcesAndQunatities.Add(newVrQ);
+            }
+
+            clonedVc.SearchDepth = this.SearchDepth;
+            clonedVc.IsSelf = this.IsSelf;
+
+            foreach (TemplateBase schedule in this.ScheduleList)
+            {
+                ScheduleList.Add(schedule);
+            }
+
+            return clonedVc;
         }
     }
 }

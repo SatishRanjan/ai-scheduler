@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ai_scheduler.src.actions
 {
-    public class ElectronicsTransformTemplate: TransformTemplateBase
+    public class ElectronicsTransformTemplate: TransformTemplate
     {
         public ElectronicsTransformTemplate()
         {

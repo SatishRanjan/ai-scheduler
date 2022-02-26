@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ai_scheduler.src.actions
 {
-    public class HousingTransformTemplate: TransformTemplateBase
+    public class HousingTransformTemplate: TransformTemplate
     {
         public HousingTransformTemplate()
         {
@@ -13,7 +13,6 @@ namespace ai_scheduler.src.actions
             INPUTS.Add("MetallicElements", 1);
             INPUTS.Add("Timber", 5);
             INPUTS.Add("MetallicAlloys", 3);
-
             
             OUTPUTS.Add("Housing", 1);
             OUTPUTS.Add("HousingWaste", 1);
