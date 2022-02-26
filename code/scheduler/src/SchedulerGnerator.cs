@@ -103,8 +103,8 @@ namespace ai_scheduler.src
             }
 
             VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
-            AlloyTransformTemplate alloyTransformTemplate = new AlloyTransformTemplate();
 
+            AlloyTransformTemplate alloyTransformTemplate = new AlloyTransformTemplate();
             return successors;
         }
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Linq;
 
 namespace ai_scheduler.src.models
 {
@@ -53,19 +54,13 @@ namespace ai_scheduler.src.models
         public double StateQuality
         {
             get;
-            private set;
+            set;
         }
 
         public int SearchDepth
         {
             get;
             set;
-        }
-
-        public double GetStateQuality()
-        {
-            StateQuality = new Random().NextDouble();
-            return StateQuality;
         }
 
         public VirtualCountry Clone()
@@ -88,7 +83,7 @@ namespace ai_scheduler.src.models
                         Weight = vRQ.VirtualResource.Weight,
                         IsWaste = vRQ.VirtualResource.IsWaste,
                         IsRenewable = vRQ.VirtualResource.IsRenewable,
-                        IsTransferrable = vRQ.VirtualResource.IsTransferrable                        
+                        IsTransferrable = vRQ.VirtualResource.IsTransferrable
                     },
                     Quantity = vRQ.Quantity
                 };
