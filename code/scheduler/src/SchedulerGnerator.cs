@@ -11,6 +11,8 @@ namespace ai_scheduler.src
     public class SchedulerGnerator
     {
         private readonly DataProvider _dataProvider;
+        private List<VirtualResource> _resources = new List<VirtualResource>();
+        private VirtualWorld _initialStateOfWorld = new VirtualWorld();
 
         public SchedulerGnerator()
         {
@@ -40,19 +42,19 @@ namespace ai_scheduler.src
             ValidateInputs(myCountryName, resourcesFileName, initialWorldStateFileName, outputScheduleFileName);
 
             // Get the list of virtual resources and initial state of the virtual world from the csv files
-            List<VirtualResource> virtualResources = _dataProvider.GetResources(resourcesFileName);
-            VirtualWorld virtualWorld = _dataProvider.GetVirtualWorld(initialWorldStateFileName, virtualResources);
+            _resources = _dataProvider.GetResources(resourcesFileName);
+            _initialStateOfWorld = _dataProvider.GetVirtualWorld(initialWorldStateFileName, _resources);
 
             // Set one of the country as self
             VirtualCountry myCountry = null;
             if (!string.IsNullOrEmpty(myCountryName))
             {
-                myCountry = virtualWorld.VirtualCountries.FirstOrDefault(c => string.Equals(c.CountryName, myCountryName, StringComparison.OrdinalIgnoreCase));
+                myCountry = _initialStateOfWorld.VirtualCountries.FirstOrDefault(c => string.Equals(c.CountryName, myCountryName, StringComparison.OrdinalIgnoreCase));
             }
             // Else set the first country as the self by default
             else
             {
-                myCountry = virtualWorld.VirtualCountries.First();
+                myCountry = _initialStateOfWorld.VirtualCountries.First();
             }
 
             // Set self to my country
@@ -62,7 +64,7 @@ namespace ai_scheduler.src
             }
 
             // Call the function that generate the schedule
-            GenerateSchedules(virtualWorld, depthBound, frontierMaxSize);
+            GenerateSchedules(_initialStateOfWorld, depthBound, frontierMaxSize);
         }
 
         public void GenerateSchedules(VirtualWorld initialState, uint depthBound, uint frontierMaxSize)
@@ -102,9 +104,21 @@ namespace ai_scheduler.src
                 return successors;
             }
 
-            VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
+            VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();           
+            List<TemplateBase> templates = TemplateProvider.GetTemplates();
+            foreach(TemplateBase template in templates)
+            {               
+            }
 
-            AlloyTransformTemplate alloyTransformTemplate = new AlloyTransformTemplate();
+            TransferTemplate transfer = templates.Where(t => t is TransferTemplate).First() as TransferTemplate;
+            transfer.FromCountry = parentState.VirtualCountries.Where(c => c.CountryName == "Atlantis").First().CountryName;
+            transfer.ToCountry = myCountry.CountryName;
+            transfer.ResourceAndQuantityMapToTransfer.Add("Timber", 100);
+            transfer.ResourceAndQuantityMapToTransfer.Add("Population", 25);
+            VirtualWorld clonedWorld = parentState.Clone();
+            clonedWorld.Parent = parentState;
+            clonedWorld.ApplyTransferTemplate();
+
             return successors;
         }
 
@@ -138,6 +152,10 @@ namespace ai_scheduler.src
             {
                 throw new ArgumentException("The output schedule file is null or empty or it doesn't exists");
             }
+        }
+
+        private void PopulateResourceNames(List<VirtualResource> virtualResources)
+        {
         }
         #endregion privatemembers
     }

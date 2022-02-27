@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ai_scheduler.src.actions;
+
 namespace ai_scheduler.src.models
 {
     public class VirtualWorld
     {
+        private readonly UtilityCalculator _utilityCalculator = new UtilityCalculator();
         // Initialize an empty list of VirtualCountry
         public VirtualWorld()
         {
@@ -28,7 +31,7 @@ namespace ai_scheduler.src.models
         /// The schedule to participating country mapping
         /// </summary>
         public Dictionary<TemplateBase, List<string>> ScheduleAndItsParticipatingConuntries { get; private set; }
-        
+
         /// <summary>
         /// A VirtualWorld consisting of a list of VirtualCountry
         /// </summary>
@@ -36,7 +39,9 @@ namespace ai_scheduler.src.models
 
         public double ExpectedUtilityForSelf()
         {
-            return new Random().NextDouble();
+            VirtualCountry self = VirtualCountries.Where(c => c.IsSelf).First();
+            double expectedUtilityForSelf = _utilityCalculator.CalcExpectedUtilityToACountryInASchedule(this, self.CountryName);
+            return expectedUtilityForSelf;
         }
 
         /// <summary>
@@ -47,10 +52,16 @@ namespace ai_scheduler.src.models
         {
             // Create a new VirtualWorld object
             VirtualWorld clonedVirtualWorld = new VirtualWorld();
+            clonedVirtualWorld.Parent = this.Parent;
 
             foreach (TemplateBase schedule in this.ApplliedOperationsList)
             {
                 ApplliedOperationsList.Add(schedule);
+            }
+
+            foreach(KeyValuePair<TemplateBase, List<string>> schCountry in this.ScheduleAndItsParticipatingConuntries)
+            {
+                clonedVirtualWorld.ScheduleAndItsParticipatingConuntries.Add(schCountry.Key, schCountry.Value);
             }
 
             // For each country create the new VirtualCountry and new VirtualResourceAndQuantity
@@ -60,15 +71,6 @@ namespace ai_scheduler.src.models
             }
 
             return clonedVirtualWorld;
-        }
-
-        public void ApplyTransformTemplate()
-        {
-        }
-
-        public void ApplyTransferTemplate()
-        {
-
         }
     }
 }
