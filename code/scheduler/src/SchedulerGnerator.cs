@@ -104,10 +104,14 @@ namespace ai_scheduler.src
                 return successors;
             }
 
-            VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();           
+            VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
             List<TemplateBase> templates = TemplateProvider.GetTemplates();
-            foreach(TemplateBase template in templates)
-            {               
+            foreach (TemplateBase template in templates)
+            {
+                if (template is TransferTemplate)
+                {
+
+                }
             }
 
             TransferTemplate transfer = templates.Where(t => t is TransferTemplate).First() as TransferTemplate;
@@ -117,7 +121,6 @@ namespace ai_scheduler.src
             transfer.ResourceAndQuantityMapToTransfer.Add("Population", 25);
             VirtualWorld clonedWorld = parentState.Clone();
             clonedWorld.Parent = parentState;
-            clonedWorld.ApplyTransferTemplate();
 
             return successors;
         }
