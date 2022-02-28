@@ -86,13 +86,22 @@ namespace ai_scheduler.src
             {
                 VirtualWorld worldState = frontier.Dequeue();
                 // If the schedule list to the world state reaches the search depth bound, add it to the solution priority queue 
-                if (worldState.ApplliedOperationsList.Count == depthBound)
+                if (worldState.ScheduleAndItsParticipatingConuntries.Count == depthBound)
                 {
                     solutions.Enqueue(worldState);
                 }
                 else
                 {
-                    // Generate successors and 
+                    List<VirtualWorld> successors = GenerateSuccessors(worldState);
+                    if (successors == null || successors.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (VirtualWorld successor in successors)
+                    {
+                        frontier.Enqueue(successor);
+                    }
                 }
             }
         }
@@ -105,34 +114,84 @@ namespace ai_scheduler.src
                 return successors;
             }
 
-            VirtualWorld clonedState = parentState.Clone();
-            clonedState.Parent = parentState;
-
             VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
             List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
 
-            foreach (TemplateBase template in templates)
+            // If either of the created resources are 0, perform the transform to generate the created resources              
+            foreach (VirtualCountry vc in parentState.VirtualCountries)
             {
-                // If either of the created resources are 0, perform the transform to generate the created resources              
-                foreach (VirtualCountry vc in clonedState.VirtualCountries)
+                // Perform the transform to generate the created resource for the countries in the parent state
+                VirtualResourceAndQuantity vrq = vc.ResourcesAndQunatities.Where(rq => rq.Quantity == 0 && rq.VirtualResource.Kind == ResourceKind.Created).FirstOrDefault();
+                if (vrq != null)
                 {
-                    VirtualResourceAndQuantity vrq = vc.ResourcesAndQunatities.Where(rq => rq.Quantity == 0 && rq.VirtualResource.Kind == ResourceKind.Created).FirstOrDefault();
-                    if (vrq != null)
+                    TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
+                    transformTemplate.CountryName = vc.CountryName;
+                    transformTemplate.IncreaseYield(5);
+                    VirtualWorld clonedState = parentState.Clone();
+                    clonedState.Parent = parentState;
+                    VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
+                    if (successor != null)
                     {
-                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
-                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate.IncreaseYield(10));
                         successors.Add(successor);
+                    }
+
+                    VirtualCountry countryWithMaxTimber = null;
+                    int maxQuantity = 0;
+
+                    // If there is not successor generated, the schedule cannot proceed
+                    if (successor == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (VirtualCountry c in successor.VirtualCountries)
+                    {
+                        if (c.IsSelf)
+                        {
+                            continue;
+                        }
+
+                        int timberQuantity = c.ResourcesAndQunatities.Where(rq => rq.VirtualResource.Name == "Timber").First().Quantity;
+                        if (timberQuantity > maxQuantity)
+                        {
+                            maxQuantity = timberQuantity;
+                            countryWithMaxTimber = c;
+                        }
+                    }
+
+                    // Transfer timber from country with max timber to the self
+                    TransferTemplate transferTemplate = TemplateProvider.GetTransferTemplate();
+                    transferTemplate.FromCountry = countryWithMaxTimber.CountryName;
+                    transferTemplate.ToCountry = myCountry.CountryName;
+                    VirtualWorld transferClone1 = clonedState.Clone();
+                    transferClone1.Parent = successor;
+                    transferTemplate.ResourceAndQuantityMapToTransfer.Add("Timber", 50);
+                    VirtualWorld transfer1 = _actionTransformer.ApplyTransferTemplate(transferClone1, transferTemplate);
+                    if (transfer1 != null)
+                    {
+                        successors.Add(transfer1);
+                    }
+
+                    // Transfer housing from country with max timber to the self
+                    TransferTemplate returnTransferTemplate = TemplateProvider.GetTransferTemplate();
+                    returnTransferTemplate.FromCountry = myCountry.CountryName;
+                    returnTransferTemplate.ToCountry = countryWithMaxTimber.CountryName;
+                    VirtualWorld transferClone2 = transferClone1.Clone();
+                    transferClone2.Parent = transferClone1;
+                    transferTemplate.ResourceAndQuantityMapToTransfer.Add("Housing", 2);
+                    VirtualWorld transfer2 =  _actionTransformer.ApplyTransferTemplate(transferClone2, returnTransferTemplate);
+                    if (transfer2 != null)
+                    {
+                        successors.Add(transfer1);
                     }
                 }
             }
 
-            TransferTemplate transfer = templates.Where(t => t is TransferTemplate).First() as TransferTemplate;
-            transfer.FromCountry = parentState.VirtualCountries.Where(c => c.CountryName == "Atlantis").First().CountryName;
-            transfer.ToCountry = myCountry.CountryName;
-            transfer.ResourceAndQuantityMapToTransfer.Add("Timber", 100);
-            transfer.ResourceAndQuantityMapToTransfer.Add("Population", 25);
-            VirtualWorld clonedWorld = parentState.Clone();
-            clonedWorld.Parent = parentState;
+           
+            /*
+            foreach (TemplateBase template in templates)
+            {
+            }*/
 
             return successors;
         }

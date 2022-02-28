@@ -35,8 +35,7 @@ namespace ai_scheduler.src.actions
                 VirtualResourceAndQuantity currentResourceAndQuantity = resourcesAndQuantitiesOfTheCountry.Where(rq => string.Equals(rq.VirtualResource.Name, outputResourceAndQuantity.Key, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
                 currentResourceAndQuantity.Quantity = currentResourceAndQuantity.Quantity + outputResourceAndQuantity.Value;
             }
-
-            worldState.ApplliedOperationsList.Add(transformOperation);
+           
             worldState.ScheduleAndItsParticipatingConuntries.Add(transformOperation, new List<string> { countryName });
             return worldState;
         }
@@ -69,8 +68,7 @@ namespace ai_scheduler.src.actions
             }
 
             // Keep track of the operation that changed this state of the world, and the participating countries
-            // This forms the data for finding the list of the participating countries in a schedule
-            worldState.ApplliedOperationsList.Add(transferOperation);
+            // This forms the data for finding the list of the participating countries in a schedule           
             worldState.ScheduleAndItsParticipatingConuntries.Add(transferOperation, new List<string> { fromCountry.CountryName, toCountry.CountryName });
             return worldState;
         }

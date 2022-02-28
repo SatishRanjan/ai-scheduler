@@ -19,7 +19,7 @@ namespace ai_scheduler.src
         public void Enqueue(VirtualWorld worldState)
         {
             _items.Add(worldState);
-            _items = _items.OrderByDescending(item => item.ExpectedUtilityForSelf()).ToList();
+            _items = _items.OrderByDescending(item => item.CalcExpectedUtilityForSelf()).ToList();
 
             if (_queueMaxSize > 1 && _items.Count() > _queueMaxSize)
             {
@@ -41,7 +41,7 @@ namespace ai_scheduler.src
 
         public bool IsEmpty()
         {
-            return _items.Count() > 0;
+            return _items.Count() <= 0;
         }
 
         public uint Count()

@@ -109,7 +109,7 @@ namespace ai_scheduler.src
 
             // Compute the discounted reward by raising the gamma value to the power of the number of operations applied to the current state
             // this is the depth of the current state is at in a schedule path
-            double discountedReward = Math.Pow(Constants.GAMMA_VALUE, currentState.ApplliedOperationsList.Count) * undiscountedRewardForTheCountry;
+            double discountedReward = Math.Pow(Constants.GAMMA_VALUE, currentState.ScheduleAndItsParticipatingConuntries.Count) * undiscountedRewardForTheCountry;
             return discountedReward;
         }
 
@@ -150,6 +150,12 @@ namespace ai_scheduler.src
                 }
             }
 
+            // If there're no countries participating in a schedule then return 0
+            if (countriesParticipatingInASchedule.Count == 0)
+            {
+                return 0;
+            }
+
             // Calculate the probability of countries participating in a schedule,
             // by multiplying the individual probability of a country in a schedule
             double probalityOfCountriesParticipatingInTheScheduleToSucceed = 1;
@@ -157,7 +163,7 @@ namespace ai_scheduler.src
             {
                 double probabilityOfIndividualCountry = CalcProbabilityOfACountryParticipatingInAScheduleToAccept(currentState, country);
                 probalityOfCountriesParticipatingInTheScheduleToSucceed = probalityOfCountriesParticipatingInTheScheduleToSucceed * probabilityOfIndividualCountry;
-            }
+            }           
 
             return probalityOfCountriesParticipatingInTheScheduleToSucceed;
         }

@@ -33,5 +33,10 @@ namespace ai_scheduler.src.actions
 
             return null;
         }
+
+        public static TransferTemplate GetTransferTemplate()
+        {
+            return new TransferTemplate();
+        }
     }
 }

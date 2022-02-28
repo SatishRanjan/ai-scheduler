@@ -12,8 +12,7 @@ namespace ai_scheduler.src.models
         // Initialize an empty list of VirtualCountry
         public VirtualWorld()
         {
-            VirtualCountries = new List<VirtualCountry>();
-            ApplliedOperationsList = new List<TemplateBase>();
+            VirtualCountries = new List<VirtualCountry>();          
             ScheduleAndItsParticipatingConuntries = new Dictionary<TemplateBase, List<string>>();
         }
 
@@ -21,11 +20,6 @@ namespace ai_scheduler.src.models
         /// The reference to the parent state
         /// </summary>
         public VirtualWorld Parent { get; set; }
-
-        /// <summary>
-        /// The list of applied templates, aka. schedules
-        /// </summary>
-        public List<TemplateBase> ApplliedOperationsList { get; set; }
 
         /// <summary>
         /// The schedule to participating country mapping
@@ -37,7 +31,15 @@ namespace ai_scheduler.src.models
         /// </summary>
         public List<VirtualCountry> VirtualCountries { get; set; }
 
-        public double ExpectedUtilityForSelf()
+        public double ExpectedUtilityForSelf
+        {
+            get 
+            {
+                return CalcExpectedUtilityForSelf();
+            }
+        }
+
+        public double CalcExpectedUtilityForSelf()
         {
             VirtualCountry self = VirtualCountries.Where(c => c.IsSelf).First();
             double expectedUtilityForSelf = _utilityCalculator.CalcExpectedUtilityToACountryInASchedule(this, self.CountryName);
@@ -53,11 +55,6 @@ namespace ai_scheduler.src.models
             // Create a new VirtualWorld object
             VirtualWorld clonedVirtualWorld = new VirtualWorld();
             clonedVirtualWorld.Parent = this.Parent;
-
-            foreach (TemplateBase schedule in this.ApplliedOperationsList)
-            {
-                ApplliedOperationsList.Add(schedule);
-            }
 
             foreach(KeyValuePair<TemplateBase, List<string>> schCountry in this.ScheduleAndItsParticipatingConuntries)
             {
