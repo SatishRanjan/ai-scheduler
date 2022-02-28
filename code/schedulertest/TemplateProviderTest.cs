@@ -12,7 +12,7 @@ namespace AiSchedulerTest
         [Fact]
         public void Enqueue_PriorityQueueTest()
         {
-            List<TemplateBase> templates = TemplateProvider.GetTemplates();
+            List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
             foreach (TemplateBase template in templates)
             {
                 if (template is AlloyTransformTemplate)

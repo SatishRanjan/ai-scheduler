@@ -13,6 +13,7 @@ namespace ai_scheduler.src
         private readonly DataProvider _dataProvider;
         private List<VirtualResource> _resources = new List<VirtualResource>();
         private VirtualWorld _initialStateOfWorld = new VirtualWorld();
+        private readonly ActionTransformer _actionTransformer = new ActionTransformer();
 
         public SchedulerGnerator()
         {
@@ -104,13 +105,24 @@ namespace ai_scheduler.src
                 return successors;
             }
 
+            VirtualWorld clonedState = parentState.Clone();
+            clonedState.Parent = parentState;
+
             VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
-            List<TemplateBase> templates = TemplateProvider.GetTemplates();
+            List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
+
             foreach (TemplateBase template in templates)
             {
-                if (template is TransferTemplate)
+                // If either of the created resources are 0, perform the transform to generate the created resources              
+                foreach (VirtualCountry vc in clonedState.VirtualCountries)
                 {
-
+                    VirtualResourceAndQuantity vrq = vc.ResourcesAndQunatities.Where(rq => rq.Quantity == 0 && rq.VirtualResource.Kind == ResourceKind.Created).FirstOrDefault();
+                    if (vrq != null)
+                    {
+                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
+                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate.IncreaseYield(10));
+                        successors.Add(successor);
+                    }
                 }
             }
 

@@ -17,11 +17,11 @@ namespace ai_scheduler.src.actions
             TemplateName = Operation.TRANSFORM.ToString();
         }      
 
-        public void IncreaseYield(int numberOfTimes)
+        public TransformTemplate IncreaseYield(int numberOfTimes)
         {
             if (numberOfTimes <= 0 || (INPUTS == null || INPUTS.Count == 0) || (OUTPUTS == null || OUTPUTS.Count == 0))
             {
-                return;
+                return null;
             }
 
             // Increase the INPUTS and OUTPUTS with the numberOfTimes
@@ -34,6 +34,8 @@ namespace ai_scheduler.src.actions
             {
                 OUTPUTS[item.Key] = item.Value * numberOfTimes;
             }
+
+            return this;
         }
     }
 }
