@@ -55,7 +55,6 @@ namespace ai_scheduler.src.models
             // Create a new VirtualWorld object
             VirtualWorld clonedVirtualWorld = new VirtualWorld();
             clonedVirtualWorld.Parent = this.Parent;
-            clonedVirtualWorld.SearchDepth++;
 
             foreach(KeyValuePair<TemplateBase, List<string>> schCountry in this.ScheduleAndItsParticipatingConuntries)
             {
