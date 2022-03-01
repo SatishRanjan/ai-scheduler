@@ -13,7 +13,7 @@ namespace AiSchedulerTest
         public void EntryPoint_Test()
         {
             SchedulerGnerator schGen = new SchedulerGnerator();
-            schGen.CreateMyCountrySchedule("Carpania", TestConstants.ResourceFileName, TestConstants.InitialWorldStateFileName, TestConstants.OutputScheduleFileName, 5, 5, 100);
+            schGen.CreateMyCountrySchedule("Carpania", TestConstants.ResourceFileName, TestConstants.InitialWorldStateFileName, TestConstants.OutputScheduleFileName, 5, 5, 10);
         }
     }
 }

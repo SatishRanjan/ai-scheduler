@@ -82,16 +82,19 @@ namespace ai_scheduler.src
             PriorityQueue frontier = new PriorityQueue(frontierMaxSize);
             frontier.Enqueue(initialState);
 
+            int searchDepth = 0;
             while (!frontier.IsEmpty())
             {
                 VirtualWorld worldState = frontier.Dequeue();
                 // If the schedule list to the world state reaches the search depth bound, add it to the solution priority queue 
-                if (worldState.ScheduleAndItsParticipatingConuntries.Count == depthBound)
+                if (searchDepth == depthBound)
                 {
                     solutions.Enqueue(worldState);
+                    searchDepth = 0;
                 }
                 else
                 {
+                    searchDepth++;
                     List<VirtualWorld> successors = GenerateSuccessors(worldState);
                     if (successors == null || successors.Count == 0)
                     {
@@ -117,77 +120,69 @@ namespace ai_scheduler.src
             VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
             List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
 
-            // If either of the created resources are 0, perform the transform to generate the created resources              
+            VirtualWorld clonedState = parentState.Clone();
+            clonedState.Parent = parentState;            
+
+            // Transfer timber from country with max timber to the self
+            TransferTemplate transferTemplate = TemplateProvider.GetTransferTemplate();
+            transferTemplate.FromCountry = clonedState.VirtualCountries[0].CountryName;
+            transferTemplate.ToCountry = myCountry.CountryName;          
+            transferTemplate.ResourceAndQuantityMapToTransfer.Add("Timber", 50);
+            VirtualWorld transfer1 = _actionTransformer.ApplyTransferTemplate(clonedState, transferTemplate);
+            if (transfer1 != null)
+            {
+                successors.Add(transfer1);
+            }
+
+            // If either of the created resources are 0, perform the transform to generate the created resources            
             foreach (VirtualCountry vc in parentState.VirtualCountries)
             {
                 // Perform the transform to generate the created resource for the countries in the parent state
-                VirtualResourceAndQuantity vrq = vc.ResourcesAndQunatities.Where(rq => rq.Quantity == 0 && rq.VirtualResource.Kind == ResourceKind.Created).FirstOrDefault();
-                if (vrq != null)
+                List<VirtualResourceAndQuantity> vrqList = vc.ResourcesAndQunatities.Where(
+                    rq => rq.Quantity == 0
+                    && rq.VirtualResource.Kind == ResourceKind.Created).ToList();
+
+                if (vrqList != null && vrqList.Count >= 0)
                 {
-                    TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
-                    transformTemplate.CountryName = vc.CountryName;
-                    transformTemplate.IncreaseYield(5);
-                    VirtualWorld clonedState = parentState.Clone();
-                    clonedState.Parent = parentState;
-                    VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
-                    if (successor != null)
+                    // For housing mettalic alloy is needed, hence transform it first for all the countries
+                    VirtualResourceAndQuantity metallicAlloys = vrqList.Where(vr => vr.VirtualResource.Name == "MetallicAlloys").FirstOrDefault();
+                    if (metallicAlloys != null)
                     {
-                        successors.Add(successor);
-                    }
-
-                    VirtualCountry countryWithMaxTimber = null;
-                    int maxQuantity = 0;
-
-                    // If there is not successor generated, the schedule cannot proceed
-                    if (successor == null)
-                    {
-                        continue;
-                    }
-
-                    foreach (VirtualCountry c in successor.VirtualCountries)
-                    {
-                        if (c.IsSelf)
+                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(metallicAlloys.VirtualResource.Name);
+                        transformTemplate.CountryName = vc.CountryName;
+                        transformTemplate.IncreaseYield(10);
+                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
+                        if (successor != null)
                         {
-                            continue;
-                        }
-
-                        int timberQuantity = c.ResourcesAndQunatities.Where(rq => rq.VirtualResource.Name == "Timber").First().Quantity;
-                        if (timberQuantity > maxQuantity)
-                        {
-                            maxQuantity = timberQuantity;
-                            countryWithMaxTimber = c;
+                            successors.Add(successor);
                         }
                     }
 
-                    // Transfer timber from country with max timber to the self
-                    TransferTemplate transferTemplate = TemplateProvider.GetTransferTemplate();
-                    transferTemplate.FromCountry = countryWithMaxTimber.CountryName;
-                    transferTemplate.ToCountry = myCountry.CountryName;
-                    VirtualWorld transferClone1 = clonedState.Clone();
-                    transferClone1.Parent = successor;
-                    transferTemplate.ResourceAndQuantityMapToTransfer.Add("Timber", 50);
-                    VirtualWorld transfer1 = _actionTransformer.ApplyTransferTemplate(transferClone1, transferTemplate);
-                    if (transfer1 != null)
+                    foreach (VirtualResourceAndQuantity vrq in vrqList.Where(vr => vr.VirtualResource.Name != "MetallicAlloys"))
                     {
-                        successors.Add(transfer1);
-                    }
-
-                    // Transfer housing from country with max timber to the self
-                    TransferTemplate returnTransferTemplate = TemplateProvider.GetTransferTemplate();
-                    returnTransferTemplate.FromCountry = myCountry.CountryName;
-                    returnTransferTemplate.ToCountry = countryWithMaxTimber.CountryName;
-                    VirtualWorld transferClone2 = transferClone1.Clone();
-                    transferClone2.Parent = transferClone1;
-                    transferTemplate.ResourceAndQuantityMapToTransfer.Add("Housing", 2);
-                    VirtualWorld transfer2 =  _actionTransformer.ApplyTransferTemplate(transferClone2, returnTransferTemplate);
-                    if (transfer2 != null)
-                    {
-                        successors.Add(transfer1);
+                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
+                        transformTemplate.CountryName = vc.CountryName;
+                        transformTemplate.IncreaseYield(3);
+                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
+                        if (successor != null)
+                        {
+                            successors.Add(successor);
+                        }
                     }
                 }
+            }            
+
+            // Transfer housing from country with max timber to the self
+            TransferTemplate returnTransferTemplate = TemplateProvider.GetTransferTemplate();
+            returnTransferTemplate.FromCountry = myCountry.CountryName;
+            returnTransferTemplate.ToCountry = clonedState.VirtualCountries[0].CountryName;
+            returnTransferTemplate.ResourceAndQuantityMapToTransfer.Add("Housing", 1);
+            VirtualWorld transfer2 = _actionTransformer.ApplyTransferTemplate(clonedState, returnTransferTemplate);
+            if (transfer2 != null)
+            {
+                successors.Add(transfer1);
             }
 
-           
             /*
             foreach (TemplateBase template in templates)
             {
