@@ -26,16 +26,15 @@ namespace ai_scheduler.src
 
             // Get the population count for the country
             int populationCount = c.ResourcesAndQunatities.Where(rq => string.Equals(rq.VirtualResource.Name, "Population", StringComparison.OrdinalIgnoreCase)).First().Quantity;
-            double totalCreatedResourceWeightTimesQuantity = 0.0;
+            double totalRawAndCreatedResourceWeightTimesQuantity = 0.0;
             double totalWasteResourcesWeightTimesQuantity = 0.0;
-            double totalRawResourceWeight = 0.0;
 
             foreach (VirtualResourceAndQuantity vrq in c.ResourcesAndQunatities)
             {
                 // For created resource calculate the total of the created resource * resource quantity
-                if (vrq.VirtualResource.Kind == ResourceKind.Created && vrq.Quantity > 0)
+                if (vrq.VirtualResource.Kind != ResourceKind.Waste && vrq.Quantity > 0)
                 {
-                    totalCreatedResourceWeightTimesQuantity = totalCreatedResourceWeightTimesQuantity + vrq.VirtualResource.Weight * vrq.Quantity;
+                    totalRawAndCreatedResourceWeightTimesQuantity = totalRawAndCreatedResourceWeightTimesQuantity + vrq.VirtualResource.Weight * vrq.Quantity;
                 }
                 // For waste resource calculate the total weight of the Sum((weight of waste resource) * (resource quantity) * (waste material weight reduction factor))
                 else if (vrq.VirtualResource.Kind == ResourceKind.Waste && vrq.Quantity > 0)
@@ -50,20 +49,10 @@ namespace ai_scheduler.src
 
                     totalWasteResourcesWeightTimesQuantity = totalWasteResourcesWeightTimesQuantity + vrq.VirtualResource.Weight * wasteWeightFactor * vrq.Quantity;
                 }
-                // Else for the initial state there is only raw resources
-                else
-                {
-                    totalRawResourceWeight = totalRawResourceWeight + vrq.Quantity;
-                }
             }
 
-            double balancedOutWeight = totalCreatedResourceWeightTimesQuantity + totalWasteResourcesWeightTimesQuantity;
-            // If there are not created resources or waste resources that means it's initial state, and hence the balancedOutWeight will be the weight of the raw resources
-            if (totalCreatedResourceWeightTimesQuantity == 0.0 && totalWasteResourcesWeightTimesQuantity == 0.0)
-            {
-                balancedOutWeight = totalRawResourceWeight;
-            }
-
+            double balancedOutWeight = totalRawAndCreatedResourceWeightTimesQuantity + totalWasteResourcesWeightTimesQuantity;
+            
             // Normalize the balanced out weight with respect to the population
             double stateQuality = balancedOutWeight / populationCount;
             return stateQuality;

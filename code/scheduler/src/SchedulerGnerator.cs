@@ -82,19 +82,16 @@ namespace ai_scheduler.src
             PriorityQueue frontier = new PriorityQueue(frontierMaxSize);
             frontier.Enqueue(initialState);
 
-            int searchDepth = 0;
             while (!frontier.IsEmpty())
             {
                 VirtualWorld worldState = frontier.Dequeue();
                 // If the schedule list to the world state reaches the search depth bound, add it to the solution priority queue 
-                if (searchDepth == depthBound)
+                if (worldState.SearchDepth == depthBound)
                 {
                     solutions.Enqueue(worldState);
-                    searchDepth = 0;
                 }
                 else
                 {
-                    searchDepth++;
                     List<VirtualWorld> successors = GenerateSuccessors(worldState);
                     if (successors == null || successors.Count == 0)
                     {
@@ -109,89 +106,67 @@ namespace ai_scheduler.src
             }
         }
 
-        public List<VirtualWorld> GenerateSuccessors(VirtualWorld parentState)
+        public List<VirtualWorld> GenerateSuccessors(VirtualWorld currentState)
         {
             List<VirtualWorld> successors = new List<VirtualWorld>();
-            if (parentState == null)
+            if (currentState == null)
             {
                 return successors;
             }
 
-            VirtualCountry myCountry = parentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
+            VirtualCountry myCountry = currentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
             List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
 
-            VirtualWorld clonedState = parentState.Clone();
-            clonedState.Parent = parentState;            
-
-            // Transfer timber from country with max timber to the self
-            TransferTemplate transferTemplate = TemplateProvider.GetTransferTemplate();
-            transferTemplate.FromCountry = clonedState.VirtualCountries[0].CountryName;
-            transferTemplate.ToCountry = myCountry.CountryName;          
-            transferTemplate.ResourceAndQuantityMapToTransfer.Add("Timber", 50);
-            VirtualWorld transfer1 = _actionTransformer.ApplyTransferTemplate(clonedState, transferTemplate);
-            if (transfer1 != null)
+            VirtualResourceAndQuantity myCountryMetallicAlloys = myCountry.ResourcesAndQunatities.Where(vr => vr.VirtualResource.Name == "MetallicAlloys").FirstOrDefault();
+            if (myCountryMetallicAlloys != null && myCountryMetallicAlloys.Quantity == 0)
             {
-                successors.Add(transfer1);
-            }
-
-            // If either of the created resources are 0, perform the transform to generate the created resources            
-            foreach (VirtualCountry vc in parentState.VirtualCountries)
-            {
-                // Perform the transform to generate the created resource for the countries in the parent state
-                List<VirtualResourceAndQuantity> vrqList = vc.ResourcesAndQunatities.Where(
-                    rq => rq.Quantity == 0
-                    && rq.VirtualResource.Kind == ResourceKind.Created).ToList();
-
-                if (vrqList != null && vrqList.Count >= 0)
+                AlloyTransformTemplate alloyTransformTemplate = TemplateProvider.GetTransformTemplate("MetallicAlloys") as AlloyTransformTemplate;
+                if (alloyTransformTemplate != null)
                 {
-                    // For housing mettalic alloy is needed, hence transform it first for all the countries
-                    VirtualResourceAndQuantity metallicAlloys = vrqList.Where(vr => vr.VirtualResource.Name == "MetallicAlloys").FirstOrDefault();
-                    if (metallicAlloys != null)
+                    alloyTransformTemplate.IncreaseYield(20);
+                    alloyTransformTemplate.CountryName = myCountry.CountryName;
+                    VirtualWorld clone = currentState.Clone();
+                    VirtualWorld transformedWorld = _actionTransformer.ApplyTransformTemplate(clone, alloyTransformTemplate);
+                    if (transformedWorld != null)
                     {
-                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(metallicAlloys.VirtualResource.Name);
-                        transformTemplate.CountryName = vc.CountryName;
-                        transformTemplate.IncreaseYield(10);
-                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
-                        if (successor != null)
-                        {
-                            successors.Add(successor);
-                        }
-                    }
-
-                    foreach (VirtualResourceAndQuantity vrq in vrqList.Where(vr => vr.VirtualResource.Name != "MetallicAlloys"))
-                    {
-                        TransformTemplate transformTemplate = TemplateProvider.GetTransformTemplate(vrq.VirtualResource.Name);
-                        transformTemplate.CountryName = vc.CountryName;
-                        transformTemplate.IncreaseYield(3);
-                        VirtualWorld successor = _actionTransformer.ApplyTransformTemplate(clonedState, transformTemplate);
-                        if (successor != null)
-                        {
-                            successors.Add(successor);
-                        }
+                        transformedWorld.SearchDepth++;
+                        successors.Add(transformedWorld);
                     }
                 }
-            }            
-
-            // Transfer housing from country with max timber to the self
-            TransferTemplate returnTransferTemplate = TemplateProvider.GetTransferTemplate();
-            returnTransferTemplate.FromCountry = myCountry.CountryName;
-            returnTransferTemplate.ToCountry = clonedState.VirtualCountries[0].CountryName;
-            returnTransferTemplate.ResourceAndQuantityMapToTransfer.Add("Housing", 1);
-            VirtualWorld transfer2 = _actionTransformer.ApplyTransferTemplate(clonedState, returnTransferTemplate);
-            if (transfer2 != null)
-            {
-                successors.Add(transfer1);
             }
 
-            /*
-            foreach (TemplateBase template in templates)
+            // Transfer timber from country first country to the self
+            VirtualWorld clone1 = currentState.Clone();
+            TransferTemplate transferTemplate = TemplateProvider.GetTransferTemplate();
+            transferTemplate.FromCountry = clone1.VirtualCountries[0].CountryName;
+            transferTemplate.ToCountry = myCountry.CountryName;
+            transferTemplate.ResourceAndQuantityMapToTransfer.Add("Timber", 50);
+            VirtualWorld transformedWorld1 = _actionTransformer.ApplyTransferTemplate(clone1, transferTemplate);
+            if (transformedWorld1 != null)
             {
-            }*/
+                transformedWorld1.SearchDepth++;
+                successors.Add(transformedWorld1);
+            }
+
+            if (myCountryMetallicAlloys != null && myCountryMetallicAlloys.Quantity > 0)
+            {
+                HousingTransformTemplate housingTransformTemplate = TemplateProvider.GetTransformTemplate("Housing") as HousingTransformTemplate;
+                housingTransformTemplate.IncreaseYield(5);
+                housingTransformTemplate.CountryName = myCountry.CountryName;
+                VirtualWorld clone = currentState.Clone();
+                VirtualWorld transformedWorld = _actionTransformer.ApplyTransformTemplate(clone, housingTransformTemplate);
+                if (transformedWorld != null)
+                {
+                    transformedWorld.SearchDepth++;
+                    successors.Add(transformedWorld);
+                }
+            }
 
             return successors;
         }
 
-        #region privatemembers
+        #region Private Members
+
         private void ValidateInputs(
             string myCountryName,
             string resourcesFileName,
@@ -226,6 +201,7 @@ namespace ai_scheduler.src
         private void PopulateResourceNames(List<VirtualResource> virtualResources)
         {
         }
-        #endregion privatemembers
+
+        #endregion Private Members
     }
 }

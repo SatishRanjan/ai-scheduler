@@ -22,6 +22,11 @@ namespace ai_scheduler.src.models
         public VirtualWorld Parent { get; set; }
 
         /// <summary>
+        /// The search depth of a the current state
+        /// </summary>
+        public int SearchDepth { get; set; }
+
+        /// <summary>
         /// The schedule to participating country mapping
         /// </summary>
         public Dictionary<TemplateBase, List<string>> ScheduleAndItsParticipatingConuntries { get; private set; }
@@ -55,8 +60,9 @@ namespace ai_scheduler.src.models
             // Create a new VirtualWorld object
             VirtualWorld clonedVirtualWorld = new VirtualWorld();
             clonedVirtualWorld.Parent = this.Parent;
+            clonedVirtualWorld.SearchDepth = this.SearchDepth;
 
-            foreach(KeyValuePair<TemplateBase, List<string>> schCountry in this.ScheduleAndItsParticipatingConuntries)
+            foreach (KeyValuePair<TemplateBase, List<string>> schCountry in this.ScheduleAndItsParticipatingConuntries)
             {
                 clonedVirtualWorld.ScheduleAndItsParticipatingConuntries.Add(schCountry.Key, schCountry.Value);
             }
