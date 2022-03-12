@@ -37,6 +37,7 @@ namespace ai_scheduler.src.actions
             }
            
             worldState.ScheduleAndItsParticipatingConuntries.Add(transformOperation, new List<string> { countryName });
+            worldState.AppliedAction = transformOperation;
             return worldState;
         }
 
@@ -70,6 +71,7 @@ namespace ai_scheduler.src.actions
             // Keep track of the operation that changed this state of the world, and the participating countries
             // This forms the data for finding the list of the participating countries in a schedule           
             worldState.ScheduleAndItsParticipatingConuntries.Add(transferOperation, new List<string> { fromCountry.CountryName, toCountry.CountryName });
+            worldState.AppliedAction = transferOperation;
             return worldState;
         }
 

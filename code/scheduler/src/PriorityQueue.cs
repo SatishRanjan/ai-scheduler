@@ -48,5 +48,13 @@ namespace ai_scheduler.src
         {
             return (uint)_items.Count;
         }
+
+        public List<VirtualWorld> Items
+        {
+            get
+            {
+                return _items;
+            }
+        }
     }
 }

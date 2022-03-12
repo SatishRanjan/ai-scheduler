@@ -26,6 +26,8 @@ namespace ai_scheduler.src.models
         /// </summary>
         public int SearchDepth { get; set; }
 
+        public TemplateBase AppliedAction { get; set; }
+
         /// <summary>
         /// The schedule to participating country mapping
         /// </summary>
@@ -48,6 +50,20 @@ namespace ai_scheduler.src.models
         {
             VirtualCountry self = VirtualCountries.Where(c => c.IsSelf).First();
             double expectedUtilityForSelf = _utilityCalculator.CalcExpectedUtilityToACountryInASchedule(this, self.CountryName);
+            return expectedUtilityForSelf;
+        }
+
+        public double StateQualifyForSelf
+        {
+            get
+            {
+                return CalcStateQualifyForSelf();
+            }
+        }
+        public double CalcStateQualifyForSelf()
+        {
+            VirtualCountry self = VirtualCountries.Where(c => c.IsSelf).First();
+            double expectedUtilityForSelf = _utilityCalculator.CalculateCountryStateQuality(self);
             return expectedUtilityForSelf;
         }
 
