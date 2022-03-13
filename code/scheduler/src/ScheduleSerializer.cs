@@ -106,7 +106,7 @@ namespace ai_scheduler.src
 
                     stringBuilder.Append(")");
                     stringBuilder.Append(" ");
-                    stringBuilder.Append("EU:" + tempState.ExpectedUtilityForSelf);
+                    stringBuilder.Append("EU(self):" + tempState.ExpectedUtilityForSelf);
                     outputSchedulesStack.Push(stringBuilder.ToString());
                     stringBuilder = new StringBuilder();
                 }

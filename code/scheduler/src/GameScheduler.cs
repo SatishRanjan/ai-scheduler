@@ -14,6 +14,8 @@ namespace ai_scheduler.src
         private List<VirtualResource> _resources = new List<VirtualResource>();
         private VirtualWorld _initialStateOfWorld = new VirtualWorld();
         private readonly ActionTransformer _actionTransformer = new ActionTransformer();
+        private string _outputScheduleFileName;
+        private uint _numOutputSchedules;
 
         public GameScheduler()
         {
@@ -40,7 +42,14 @@ namespace ai_scheduler.src
             uint frontierMaxSize)
         {
             // Validat the inputs
-            ValidateInputs(myCountryName, resourcesFileName, initialWorldStateFileName, outputScheduleFileName);
+            bool areInputValid = ValidateInputs(myCountryName, resourcesFileName, initialWorldStateFileName, outputScheduleFileName);
+            if (!areInputValid)
+            {
+                return;
+            }
+
+            _outputScheduleFileName = outputScheduleFileName;
+            _numOutputSchedules = numOutputSchedules;
 
             // Get the list of virtual resources and initial state of the virtual world from the csv files
             _resources = _dataProvider.GetResources(resourcesFileName);
@@ -64,7 +73,7 @@ namespace ai_scheduler.src
                 myCountry.IsSelf = true;
             }
 
-            // Call the function that generate the schedule
+            // Call the function that generates the schedule
             GenerateSchedules(_initialStateOfWorld, depthBound, frontierMaxSize);
         }
 
@@ -106,7 +115,7 @@ namespace ai_scheduler.src
                 }
             }
 
-            GenerateGameSchedulesOutput(solutions, 5, "test");
+            GenerateGameSchedulesOutput(solutions, _numOutputSchedules, _outputScheduleFileName);
         }
 
         /// <summary>
@@ -121,6 +130,14 @@ namespace ai_scheduler.src
             {
                 return successors;
             }
+
+            /*
+             * At this time to make the project functional, I'm taking the below approach to generate the successor
+             * If my country doesn't have the housing then it transforms the available elements to produce the raw materials needed for the housing
+             * First, if my county (self) doesn't have MatallicAlloys needed for the housing, it produces some
+             * Then it transfer Timber as well 
+             * Then produce housing
+             */
 
             VirtualCountry myCountry = currentState.VirtualCountries.Where(c => c.IsSelf).FirstOrDefault();
             List<TemplateBase> templates = TemplateProvider.GetAllTemplates();
@@ -187,22 +204,28 @@ namespace ai_scheduler.src
                 return;
             }
 
-            numberOfOutputSchedules = 4;
             int counter = 0;
-            string result = "The schedules output for the given number of solutions: \n";
+            string result = $"The schedules output for the given number of solutions generated at {DateTime.Now} : \n";
             while (counter < solutions.Items.Count && numberOfOutputSchedules > 0)
             {
-                VirtualWorld solutionState = solutions.Items[counter];                
+                VirtualWorld solutionState = solutions.Items[counter];
                 result = result + ScheduleSerializer.SerializeSchedules(solutionState) + "\n";
                 counter++;
                 numberOfOutputSchedules--;
             }
+
+            if (!File.Exists(outputScheduleFileName))
+            {
+                File.Create(outputScheduleFileName);
+            }
+
+            File.WriteAllText(outputScheduleFileName, result);
         }
 
         #region Private Members
 
         // The function validates the input to the GameScheduler
-        private void ValidateInputs(
+        private bool ValidateInputs(
             string myCountryName,
             string resourcesFileName,
             string initialWorldStateFileName,
@@ -211,30 +234,32 @@ namespace ai_scheduler.src
             // If the my country name is null or empty throw an exception
             if (string.IsNullOrEmpty(myCountryName))
             {
-                throw new ArgumentException("My country name cannot be null or empty");
+                Console.WriteLine("My country name cannot be null or empty");
+                return false;
             }
 
-            // If the resource file name is null or empty or if the file doesn't exist throw an exception
+            // If the resource file name is null or empty or if the file doesn't exist
             if (string.IsNullOrEmpty(resourcesFileName) || !File.Exists(resourcesFileName))
             {
-                throw new ArgumentException("The resource file name is null or empty or it doesn't exists");
+                Console.WriteLine("The resource file name is null or empty or it doesn't exists");
+                return false;
             }
 
-            // If initial world state file name is null or empty or if the file doesn't exist throw an exception
+            // If initial world state file name is null or empty or if the file doesn't exist
             if (string.IsNullOrEmpty(initialWorldStateFileName) || !File.Exists(initialWorldStateFileName))
             {
-                throw new ArgumentException("The initial world state file is null or empty or it doesn't exists");
+                Console.WriteLine("The initial world state file is null or empty or it doesn't exists");
+                return false;
             }
 
-            // If output schedule file name is null or empty or if the file doesn't exist throw an exception
-            if (string.IsNullOrEmpty(outputScheduleFileName) || !File.Exists(outputScheduleFileName))
+            // If output schedule file name is null or empty 
+            if (string.IsNullOrEmpty(outputScheduleFileName))
             {
-                throw new ArgumentException("The output schedule file is null or empty or it doesn't exists");
+                Console.WriteLine("The output schedule file is null or empty or it doesn't exists");
+                return false;
             }
-        }
 
-        private void PopulateResourceNames(List<VirtualResource> virtualResources)
-        {
+            return true;
         }
 
         #endregion Private Members

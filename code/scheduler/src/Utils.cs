@@ -20,7 +20,6 @@ namespace ai_scheduler.src
     public class Constants
     {
         public const double GAMMA_VALUE = .9;
-        public const int SEARCH_DEPTH = 5;
         public const double X_0_LOGISTICS_FN = 0;
         public const double K_VAL_LOGISTICS_FN = 1;
         public const double C_VAL_FAILURE_COST = .8;
