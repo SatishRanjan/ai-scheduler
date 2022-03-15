@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using ai_scheduler.src.models;
 using ai_scheduler.src.actions;
+using System.Diagnostics;
 
 namespace ai_scheduler.src
 {
@@ -79,6 +80,9 @@ namespace ai_scheduler.src
 
         public void GenerateSchedules(VirtualWorld initialState, uint depthBound, uint frontierMaxSize)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             if (initialState == null || initialState.VirtualCountries.Count == 0)
             {
                 throw new ArgumentNullException("The countries with initial state cannot be null or empty");
@@ -116,6 +120,8 @@ namespace ai_scheduler.src
             }
 
             GenerateGameSchedulesOutput(solutions, _numOutputSchedules, _outputScheduleFileName);
+            sw.Stop();
+            Console.WriteLine($"Total time take for schedules (milliseconds): {sw.ElapsedMilliseconds}");
         }
 
         /// <summary>
