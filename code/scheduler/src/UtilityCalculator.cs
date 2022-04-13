@@ -11,7 +11,7 @@ namespace ai_scheduler.src
     {
 
         /// <summary>
-        /// Calculated the state quality of a country
+        /// Calculates the state quality of a country
         /// </summary>
         /// <param name="c">The virtual country object</param>
         /// <returns><see cref="double"/></returns>

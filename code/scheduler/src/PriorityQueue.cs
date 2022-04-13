@@ -23,6 +23,8 @@ namespace ai_scheduler.src
 
             if (_queueMaxSize > 1 && _items.Count() > _queueMaxSize)
             {
+                // Removes the items from the list starting from the item queMaxSize till the end of the list
+                // i.e. it only keeps the _queueMaxSize world state in the List with the highest value of ExpectedUtilityForSelf
                 _items.RemoveRange((int)_queueMaxSize, _items.Count() - (int)_queueMaxSize);
             }
         }
